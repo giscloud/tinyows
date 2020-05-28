@@ -183,6 +183,7 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
 static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 {
   buffer *sql;
+  buffer *hc_response;
   PGresult *res;
 
   assert(o);
@@ -277,33 +278,44 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
     }
 
-    buffer_empty(sql);
-    PQclear(res);
-    /* Now try to find a DEFAULT value related to this Pkey */
-    buffer_add_str(sql, "SELECT column_default FROM information_schema.columns WHERE table_schema = '");
-    buffer_copy(sql, l->storage->schema);
-    buffer_add_str(sql, "' AND table_name = '");
-    buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND column_name = '");
-    buffer_copy(sql, l->storage->pkey);
-    buffer_add_str(sql, "' AND table_catalog = current_database();");
+    /* GIS Cloud Fix to speed up TinyOWS, query on information_schema */
 
-    res = ows_psql_exec(o, sql->buf);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-      PQclear(res);
-      buffer_free(sql);
-      ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                "Unable to SELECT column_default FROM information_schema.columns.",
-                "pkey_default retrieve");
-      return;
-    }
+    // buffer_empty(sql);
+    // PQclear(res);
+
+    /* Now try to find a DEFAULT value related to this Pkey */
+    // buffer_add_str(sql, "SELECT column_default FROM information_schema.columns WHERE table_schema = '");
+    // buffer_copy(sql, l->storage->schema);
+    // buffer_add_str(sql, "' AND table_name = '");
+    // buffer_copy(sql, l->storage->table);
+    // buffer_add_str(sql, "' AND column_name = '");
+    // buffer_copy(sql, l->storage->pkey);
+    // buffer_add_str(sql, "' AND table_catalog = current_database();");
+
+    // res = ows_psql_exec(o, sql->buf);
+    // if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+    //   PQclear(res);
+    //   buffer_free(sql);
+    //   ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+    //             "Unable to SELECT column_default FROM information_schema.columns.",
+    //             "pkey_default retrieve");
+    //   return;
+    // }
 
     /* Even if no DEFAULT value found, this function return an empty row
      * so we must check that result string returned > 0 char
      */
-    if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
+
+    hc_response = buffer_init();
+    buffer_add_str(hc_response, "nextval('");
+    buffer_copy(hc_response, l->storage->schema);
+    buffer_add_str(hc_response, ".");
+    buffer_copy(hc_response, l->storage->table);
+    buffer_add_str(hc_response, "_ogc_fid_seq'::regclass)");
+
+    if (strlen((char *) hc_response->buf) > 0) {
       l->storage->pkey_default = buffer_init();
-      buffer_add_str(l->storage->pkey_default, PQgetvalue(res, 0, 0));
+      buffer_add_str(l->storage->pkey_default, hc_response->buf);
     }
   }
 
@@ -501,7 +513,7 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 
 void ows_layers_storage_fill(ows * o)
 {
-  PGresult *res, *res_g;
+  PGresult *res;
   ows_layer_node *ln;
   bool filled;
   buffer *sql;
@@ -515,12 +527,16 @@ void ows_layers_storage_fill(ows * o)
   res = ows_psql_exec(o, sql->buf);
   buffer_empty(sql);
 
-  buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geography_columns");
-  res_g = ows_psql_exec(o, sql->buf);
-  buffer_free(sql);
+  /* GIS Cloud Fix to speed up TinyOWS, query on geography_columns */
+
+  // buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geography_columns");
+  // res_g = ows_psql_exec(o, sql->buf);
+  // buffer_free(sql);
 
   for (ln = o->layers->first ; ln ; ln = ln->next) {
     filled = false;
+    char *schema_g = "public";
+    char *table_name_g = "gc_layer_selection";
 
     for (i = 0, end = PQntuples(res); i < end; i++) {
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))
@@ -530,9 +546,9 @@ void ows_layers_storage_fill(ows * o)
       }
     }
 
-    for (i = 0, end = PQntuples(res_g); i < end; i++) {
-      if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0))
-           && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
+    for (i = 0, end = 1; i < end; i++) {
+      if (    buffer_cmp(ln->layer->storage->schema, (char *) schema_g)
+           && buffer_cmp(ln->layer->storage->table,  (char *) table_name_g)) {
         ows_layer_storage_fill(o, ln->layer, false);
         filled = true;
       }
@@ -545,5 +561,5 @@ void ows_layers_storage_fill(ows * o)
   }
 
   PQclear(res);
-  PQclear(res_g);
+  // PQclear(res_g);
 }

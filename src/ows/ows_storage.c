@@ -192,19 +192,15 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 
   sql = buffer_init();
 
-  buffer_add_str(sql, "SELECT c.column_name FROM information_schema.constraint_column_usage c, pg_namespace n ");
-  buffer_add_str(sql, "WHERE c.table_schema=n.nspname AND n.nspname = '");
+  buffer_add_str(sql, "SELECT pg_attribute.attname FROM pg_index, pg_class, pg_attribute, pg_namespace ");
+  buffer_add_str(sql, "WHERE pg_class.oid = '");
   buffer_copy(sql, l->storage->schema);
-  buffer_add_str(sql, "' AND c.table_name = '");
+  buffer_add_str(sql, ".");
   buffer_copy(sql, l->storage->table);
-  buffer_add_str(sql, "' AND c.constraint_name = (");
-
-  buffer_add_str(sql, "SELECT c.conname FROM pg_class r, pg_constraint c, pg_namespace n ");
-  buffer_add_str(sql, "WHERE r.oid = c.conrelid AND relname = '");
-  buffer_copy(sql, l->storage->table);
-  buffer_add_str(sql, "' AND r.relnamespace = n.oid AND n.nspname = '");
+  buffer_add_str(sql, "'::regclass AND indrelid = pg_class.oid AND nspname = '");
   buffer_copy(sql, l->storage->schema);
-  buffer_add_str(sql, "' AND c.contype = 'p')");
+  buffer_add_str(sql, "' AND pg_class.relnamespace = pg_namespace.oid AND pg_attribute.attrelid = pg_class.oid ");
+  buffer_add_str(sql, " AND pg_attribute.attnum = any(pg_index.indkey) AND indisprimary");
 
   res = ows_psql_exec(o, sql->buf);
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {

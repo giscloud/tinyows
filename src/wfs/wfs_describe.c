@@ -94,7 +94,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
     xsd_type = ows_psql_to_xsd(an->value, o->request->request.wfs->format);
 
-    if(!strcmp(xsd_type, "string")) {
+    if(0 && !strcmp(xsd_type, "string")) {
       table_name = ows_psql_table_name(o, layer_name);
       /* Read string constraint from database and convert to gml restrictions*/
       constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);

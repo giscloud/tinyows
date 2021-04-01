@@ -196,7 +196,9 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
   buffer_add_str(sql, "WHERE pg_class.oid = '");
   buffer_copy(sql, l->storage->schema);
   buffer_add_str(sql, ".");
+  buffer_add_str(sql, "\"");
   buffer_copy(sql, l->storage->table);
+  buffer_add_str(sql, "\"");
   buffer_add_str(sql, "'::regclass AND indrelid = pg_class.oid AND nspname = '");
   buffer_copy(sql, l->storage->schema);
   buffer_add_str(sql, "' AND pg_class.relnamespace = pg_namespace.oid AND pg_attribute.attrelid = pg_class.oid ");

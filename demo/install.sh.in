@@ -11,7 +11,9 @@ PGUSER=postgres
 SHP2PGSQL=@SHP2PGSQL@
 DB=tinyows_demo
 
-if [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
+if [ -d /usr/local/pgsql/share/contrib/postgis-3.1 ]; then
+        PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.1
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.0
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.5 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.5
@@ -48,4 +50,9 @@ echo "Import layer data: france_dept"
 $SHP2PGSQL -s 27582 -I -W latin1 demo/france.shp france > _france.sql
 su $PGUSER -c "$PGBIN/psql $DB < _france.sql"
 
-rm _world.sql _france.sql
+echo "Import non spatial layer"
+echo "CREATE TABLE geometry_less(id SERIAL PRIMARY KEY, intcol INTEGER, textcol TEXT);" > _geometry_less.sql
+echo "INSERT INTO geometry_less (intcol, textcol) VALUES (123, 'foo');" >> _geometry_less.sql
+su $PGUSER -c "$PGBIN/psql $DB < _geometry_less.sql"
+
+rm _world.sql _france.sql _geometry_less.sql

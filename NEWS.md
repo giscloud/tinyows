@@ -1,3 +1,11 @@
+1.2.2   (2024-07-31) *in memory of Olivier Courtin*
+ - Include stdlib.h for atoi ([#105](https://github.com/MapServer/tinyows/pull/105)) (Bas Couwenberg)
+ 
+1.2.1   (2024-05-17) *in memory of Olivier Courtin*
+ - Fix JSON encoding ([#100](https://github.com/MapServer/tinyows/pull/100)) (Kévin Dubuc)
+ - Use stdbool.h instead of custom definitions ([#99](https://github.com/MapServer/tinyows/pull/99)) (Bas Couwenberg)
+ - Handle check when using TINYOWS_MAPFILE ([#97](https://github.com/MapServer/tinyows/pull/97)) (Jeff McKenna)
+ 
 1.2.0   (2021-06-11) *in memory of Olivier Courtin*
  - Fix custom types conversion (Vincent Mora)
  - Add support for geometry-less tables (Even Rouault)

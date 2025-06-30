@@ -1,5 +1,8 @@
 # TinyOWS
 
+[![Build TinyOWS on Linux Status](https://github.com/MapServer/tinyows/actions/workflows/linux.yml/badge.svg)](https://github.com/MapServer/tinyows/actions?query=workflow%3A%22Linux%20Build%22%20branch%3Amain)
+[![Release](https://img.shields.io/github/v/release/MapServer/tinyows)](https://github.com/MapServer/tinyows/releases)
+
 TinyOWS is a simple WFS-T server based on PostGIS spatial database.
 
 ## Documentation Home
@@ -25,7 +28,7 @@ All code must meet the following rules :
 
 Code dynamically linked with the following other librairies:
 - PostgreSQL
-- libxml 2.9.x
+- libxml2
 - flex
 
 ## Credits
